@@ -1,49 +1,52 @@
 // ==UserScript==
-// @name         Auto Scroll
+// @name         Auto Scroll Page neu
 // @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  Automatically scrolls down and up on a specified URL
-// @author       Your namea
+// @version      1.0
+// @description  Scroll slowly down, then quickly jump back up on a page
+// @author       You
 // @match        https://keepthescore.com/*
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
-    const scrollDownSpeed = 5; // Geschwindigkeit des Scrollens in Millisekunden
-    const scrollUpSpeed = 300;
-    const scrollDownTime = 6000; // Zeit in Millisekunden, die gewartet wird, bevor das Scrollen beginnt
+    // Zeitintervalle
+    const waitTime = 5000; // Zeit zum Warten (5 Sekunden)
+    const slowScrollInterval = 50; // Intervall für langsames Scrollen (Millisekunden)
+    const slowScrollStep = 2; // Schrittgröße für langsames Scrollen (Pixel)
 
-    function scrollToBottom() {
+    let scrollingDown = false;
+
+    // Funktion: Langsam nach unten scrollen
+    function slowScrollDown() {
         return new Promise((resolve) => {
-            const scrollInterval = setInterval(() => {
-                window.scrollBy(0, scrollDownSpeed);
-                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-                    clearInterval(scrollInterval);
-                    resolve();
+            scrollingDown = true;
+            const interval = setInterval(() => {
+                if (window.scrollY + window.innerHeight >= document.body.scrollHeight || !scrollingDown) {
+                    clearInterval(interval);
+                    resolve(); // Scrollen beendet
+                } else {
+                    window.scrollBy(0, slowScrollStep);
                 }
-            }, scrollDownSpeed);
+            }, slowScrollInterval);
         });
     }
 
-    function scrollToTop() {
-        window.scrollTo(0, 0);
-    }
-    function wait(ms) {
-        return new Promise((resolve) => {
-            setTimeout(resolve, ms);
-        });
+    // Funktion: Schnell zum Anfang springen
+    function quickScrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    async function autoScroll() {
+    // Hauptschleife
+    async function main() {
         while (true) {
-            await wait(scrollDownTime);
-            await scrollToBottom();
-            await scrollToTop();
+            await new Promise((r) => setTimeout(r, waitTime)); // Warten
+            await slowScrollDown(); // Langsames Scrollen nach unten
+            await new Promise((r) => setTimeout(r, 1000)); // Kleine Pause (optional)
+            quickScrollToTop(); // Sprung nach oben
         }
     }
 
-    // Starte das automatische Scrollen
-    autoScroll();
+    main(); // Startet das Skript
 })();
